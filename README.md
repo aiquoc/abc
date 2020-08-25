@@ -16,6 +16,8 @@ the calling application. A simple demo program (file src/demo.c) shows how to
 create a stand-alone program performing DAG-aware AIG rewriting, by calling 
 APIs of ABC compiled as a static library.
 
+
+
 To build the demo program
 
  * Copy demo.c and libabc.a to the working directory
@@ -46,6 +48,7 @@ or in the batch mode:
     i10          : i/o =  257/  224  lat =    0  and =   2396  lev = 37
     i10          : i/o =  257/  224  lat =    0  and =   1851  lev = 35
     Networks are equivalent.
+    
 
 ## Compiling as C or C++
 
@@ -55,6 +58,14 @@ The current version of ABC can be compiled with C compiler or C++ compiler.
  * To compile as C++ code without namespaces: make sure that `CC=g++` and `ABC_NAMESPACE` is not defined.
  * To compile as C++ code with namespaces: make sure that `CC=g++` and `ABC_NAMESPACE` is set to
    the name of the requested namespace. For example, add `-DABC_NAMESPACE=xxx` to OPTFLAGS.
+
+
+ ## Sat-Based-Fault-Equivalence
+ 
+The Sat-Based-Fault-Equivalence is added by command "faultclasses -s" to find all equivalence faults in both combination and sequential circuit.
+    [...] ~/abc> ./abc
+    abc 01> faultclasses -s Cases_results/Case_01/Case01_design.txt Cases_results/Case_01/Case01_faults.txt;
+ 
 
 ## Building a shared library
 
