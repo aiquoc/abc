@@ -63,8 +63,11 @@ The current version of ABC can be compiled with C compiler or C++ compiler.
  ## Sat-Based-Fault-Equivalence
  
 The Sat-Based-Fault-Equivalence is added by command "faultclasses -s" to find all equivalence faults in both combination and sequential circuit.
-    [...] ~/abc> ./abc
-    abc 01> faultclasses -s Cases_results/Case_01/Case01_design.txt Cases_results/Case_01/Case01_faults.txt;
+  
+  [...] ~/abc> ./abc
+   UC Berkeley, ABC 1.01 (compiled Aug 26 2020 00:07:24)
+   
+   abc 01> faultclasses -s Cases_results/Case_01/Case01_design.txt Cases_results/Case_01/Case01_faults.txt;
  
 
 ## Building a shared library
