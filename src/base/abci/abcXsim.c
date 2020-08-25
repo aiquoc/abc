@@ -53,8 +53,14 @@ static inline int  Abc_XsimAnd( int Value0, int Value1 )
 }
 static inline int  Abc_XsimRand2()   
 {
-//    return (rand() & 1) ? XVS1 : XVS0;
+   // return (rand() & 1) ? XVS1 : XVS0;
     return (Gia_ManRandom(0) & 1) ? XVS1 : XVS0;
+}
+
+static inline int  Abc_XsimRandX()   
+{
+    return (rand() & 1) ? XVS1 : XVS0;
+    //return (Gia_ManRandom(0) & 1) ? XVS1 : XVS0;
 }
 static inline int  Abc_XsimRand3()   
 {
@@ -176,7 +182,6 @@ void Abc_NtkXValueSimulate( Abc_Ntk_t * pNtk, int nFrames, int fXInputs, int fXS
             Abc_ObjSetXsim( Abc_ObjFanout0(pObj), Abc_ObjGetXsim(Abc_ObjFanin0(pObj)) );
     }
 }
-
 /**Function*************************************************************
 
   Synopsis    [Cycles the circuit to create a new initial state.]
@@ -220,6 +225,69 @@ void Abc_NtkCycleInitState( Abc_Ntk_t * pNtk, int nFrames, int fUseXval, int fVe
 //        printf( "%d", Abc_LatchIsInit1(pObj) );
     }
 //    printf( "\n" );
+}
+
+int * Abc_NtkSimulateSeq(Abc_Ntk_t * pNtk, int nFrames, int nOutputs, int seed )
+{
+	nOutputs = Abc_NtkPoNum(pNtk);
+	
+	int *out = (int*) malloc(nFrames * nOutputs * sizeof(int));
+	Abc_Obj_t * pObj;
+	int i, f;
+	if ( !Abc_NtkIsStrash(pNtk) )
+    {
+        pNtk = Abc_NtkStrash(pNtk, 0, 0, 0);
+    }
+	//assert(Abc_NtkIsStrash(pNtk));
+	srand(seed);
+	
+	// initialize the values
+	Abc_ObjSetXsim(Abc_AigConst1(pNtk), XVS1);
+
+	//Abc_NtkForEachPi(pNtk, pObj, i)
+		//Abc_ObjSetXsim(pObj, Abc_NtkXsimRand2());
+
+	Abc_NtkForEachLatch(pNtk, pObj, i)
+		Abc_ObjSetXsim(Abc_ObjFanout0(pObj), Abc_LatchInit(pObj));
+	// simulate for the given number of timeframes
+	//fprintf( stdout, "Frame : Inputs : Latches : Outputs\n" );
+	for (f = 0; f < nFrames; f++)
+	{
+				
+		Abc_NtkForEachPi(pNtk, pObj, i)
+			Abc_ObjSetXsim(pObj, Abc_XsimRandX());
+		Abc_AigForEachAnd(pNtk, pObj, i)
+			Abc_ObjSetXsim(pObj, Abc_XsimAnd(Abc_ObjGetXsimFanin0(pObj), Abc_ObjGetXsimFanin1(pObj)));
+		Abc_NtkForEachCo(pNtk, pObj, i)
+			Abc_ObjSetXsim(pObj, Abc_ObjGetXsimFanin0(pObj));
+		
+		 // print output
+       /* fprintf( stdout, "%2d : ", f );
+        Abc_NtkForEachPi( pNtk, pObj, i )
+            Abc_XsimPrint( stdout, Abc_ObjGetXsim(pObj) );
+        fprintf( stdout, " : " );
+        Abc_NtkForEachLatch( pNtk, pObj, i )
+        {
+            if ( Abc_ObjGetXsim(Abc_ObjFanout0(pObj)) != XVSX )
+                printf( " %s=", Abc_ObjName(pObj) );
+            Abc_XsimPrint( stdout, Abc_ObjGetXsim(Abc_ObjFanout0(pObj)) );
+        }
+        fprintf( stdout, " : " );
+        Abc_NtkForEachPo( pNtk, pObj, i )
+            Abc_XsimPrint( stdout, Abc_ObjGetXsim(pObj) );
+        fprintf( stdout, "\n" );*/
+		
+		Abc_NtkForEachPo(pNtk, pObj, i)
+			out[f*nOutputs + i] = Abc_ObjGetXsim(pObj) - 1;
+			
+		// transfer the latch values
+		Abc_NtkForEachLatch(pNtk, pObj, i)
+			Abc_ObjSetXsim(Abc_ObjFanout0(pObj), Abc_ObjGetXsim(Abc_ObjFanin0(pObj)));
+		
+
+		
+	}
+	return out;
 }
 
 ///////////////////////////////////////////////////////////////////////

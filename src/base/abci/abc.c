@@ -150,6 +150,7 @@ static int Abc_CommandCascade                ( Abc_Frame_t * pAbc, int argc, cha
 static int Abc_CommandExtract                ( Abc_Frame_t * pAbc, int argc, char ** argv );
 static int Abc_CommandVarMin                 ( Abc_Frame_t * pAbc, int argc, char ** argv );
 static int Abc_CommandFaultClasses           ( Abc_Frame_t * pAbc, int argc, char ** argv );
+static int Abc_CommandFaultClassesG           ( Abc_Frame_t * pAbc, int argc, char ** argv );
 static int Abc_CommandExact                  ( Abc_Frame_t * pAbc, int argc, char ** argv );
 static int Abc_CommandBmsStart               ( Abc_Frame_t * pAbc, int argc, char ** argv );
 static int Abc_CommandBmsStop                ( Abc_Frame_t * pAbc, int argc, char ** argv );
@@ -873,6 +874,7 @@ void Abc_Init( Abc_Frame_t * pAbc )
     Cmd_CommandAdd( pAbc, "Synthesis",    "extract",       Abc_CommandExtract,          1 );
     Cmd_CommandAdd( pAbc, "Synthesis",    "varmin",        Abc_CommandVarMin,           0 );
     Cmd_CommandAdd( pAbc, "Synthesis",    "faultclasses",  Abc_CommandFaultClasses,     0 );
+    Cmd_CommandAdd( pAbc, "Synthesis",    "faultclassesg",  Abc_CommandFaultClassesG,     0 );
     Cmd_CommandAdd( pAbc, "Synthesis",    "exact",         Abc_CommandExact,            1 );
 
     Cmd_CommandAdd( pAbc, "Exact synthesis", "bms_start",  Abc_CommandBmsStart,         0 );
@@ -8202,6 +8204,7 @@ usage:
 int Abc_CommandFaultClasses( Abc_Frame_t * pAbc, int argc, char ** argv )
 {
     extern void Abc_NtkDetectClassesTest( Abc_Ntk_t * pNtk, int fSeq, int fVerbose, int fVeryVerbose );
+	extern void Abc_NtkDetectClassesTest1( char * pFileNames[2], int fSeq, int fVerbose, int fVeryVerbose );
     extern void Abc_NtkGenFaultList( Abc_Ntk_t * pNtk, char * pFileName, int fStuckAt );
     Abc_Ntk_t * pNtk;
     int c, fGen = 0, fStuckAt = 0, fSeq = 0, fVerbose = 0, fVeryVerbose = 0;
@@ -8232,6 +8235,72 @@ int Abc_CommandFaultClasses( Abc_Frame_t * pAbc, int argc, char ** argv )
             goto usage;
         }
     }
+    /*if ( pNtk == NULL )
+    {
+        Abc_Print( -1, "Empty network.\n" );
+        return 1;
+    }*/
+   /* if ( Abc_NtkIsStrash(pNtk) )
+    {
+        Abc_Print( -1, "Only applicable to a logic network.\n" );
+        return 1;
+    }*/
+    if ( fGen )
+    {
+        char * pFileName = Extra_FileNameGenericAppend(Abc_NtkSpec(pNtk), "_faults.txt");
+        Abc_NtkGenFaultList( pNtk, pFileName, fStuckAt );
+    }
+	if (fSeq)
+	
+		Abc_NtkDetectClassesTest1( argv + globalUtilOptind, fSeq, fVerbose, fVeryVerbose );
+	
+    else
+        Abc_NtkDetectClassesTest( argv + globalUtilOptind, fSeq, fVerbose, fVeryVerbose );
+    return 0;
+
+usage:
+    Abc_Print( -2, "usage: faultclasses <circuit> <fins>[-gcsvwh] \n" );
+    Abc_Print( -2, "\t           computes equivalence classes of faults in the given mapped netlist;\n" );
+    Abc_Print( -2, "\t           the fault list with faults in the format: <fault_id> <node_name> <fault_name>\n" );
+    Abc_Print( -2, "\t           should be read by command \"read_fins\" before calling this command\n" );
+    Abc_Print( -2, "\t-g       : toggle generating a fault list for the current mapped network [default = %s]\n", fGen? "yes": "no" );
+    Abc_Print( -2, "\t-c       : toggle using only stuck-at faults in the generated fault list [default = %s]\n", fStuckAt? "yes": "no" );
+    Abc_Print( -2, "\t-s       : toggle detecting sequential equivalence classes [default = %s]\n", fSeq? "yes": "no" );
+    Abc_Print( -2, "\t-v       : toggle verbose printout during computation [default = %s]\n", fVerbose? "yes": "no" );
+    Abc_Print( -2, "\t-w       : toggle printing of resulting fault equivalence classes [default = %s]\n", fVeryVerbose? "yes": "no" );
+    Abc_Print( -2, "\t-h       : print the command usage\n");
+    return 1;
+}
+int Abc_CommandFaultClassesG( Abc_Frame_t * pAbc, int argc, char ** argv )
+{
+    extern void Abc_NtkDetectClassesTestGF( Abc_Ntk_t * pNtk, int fVerbose, int fVeryVerbose );
+   extern void Abc_NtkGenFaultList( Abc_Ntk_t * pNtk, char * pFileName, int fStuckAt );
+    Abc_Ntk_t * pNtk;
+    int c, fGen = 0, fStuckAt = 0, fVerbose = 0, fVeryVerbose = 0;
+    pNtk = Abc_FrameReadNtk(pAbc);
+    Extra_UtilGetoptReset();
+    while ( ( c = Extra_UtilGetopt( argc, argv, "gcvwh" ) ) != EOF )
+    {
+        switch ( c )
+        {
+        case 'g':
+            fGen ^= 1;
+            break;
+        case 'c':
+            fStuckAt ^= 1;
+            break;
+        case 'v':
+            fVerbose ^= 1;
+            break;
+        case 'w':
+            fVeryVerbose ^= 1;
+            break;
+        case 'h':
+            goto usage;
+        default:
+            goto usage;
+        }
+    }
     if ( pNtk == NULL )
     {
         Abc_Print( -1, "Empty network.\n" );
@@ -8248,23 +8317,21 @@ int Abc_CommandFaultClasses( Abc_Frame_t * pAbc, int argc, char ** argv )
         Abc_NtkGenFaultList( pNtk, pFileName, fStuckAt );
     }
     else
-        Abc_NtkDetectClassesTest( pNtk, fSeq, fVerbose, fVeryVerbose );
+        Abc_NtkDetectClassesTestGF( pNtk, fVerbose, fVeryVerbose );
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: faultclasses [-gcsvwh]\n" );
+    Abc_Print( -2, "usage: faultclassesg [-gcvwh]\n" );
     Abc_Print( -2, "\t           computes equivalence classes of faults in the given mapped netlist;\n" );
     Abc_Print( -2, "\t           the fault list with faults in the format: <fault_id> <node_name> <fault_name>\n" );
     Abc_Print( -2, "\t           should be read by command \"read_fins\" before calling this command\n" );
     Abc_Print( -2, "\t-g       : toggle generating a fault list for the current mapped network [default = %s]\n", fGen? "yes": "no" );
     Abc_Print( -2, "\t-c       : toggle using only stuck-at faults in the generated fault list [default = %s]\n", fStuckAt? "yes": "no" );
-    Abc_Print( -2, "\t-s       : toggle detecting sequential equivalence classes [default = %s]\n", fSeq? "yes": "no" );
     Abc_Print( -2, "\t-v       : toggle verbose printout during computation [default = %s]\n", fVerbose? "yes": "no" );
     Abc_Print( -2, "\t-w       : toggle printing of resulting fault equivalence classes [default = %s]\n", fVeryVerbose? "yes": "no" );
     Abc_Print( -2, "\t-h       : print the command usage\n");
     return 1;
 }
-
 /**Function*************************************************************
 
   Synopsis    []

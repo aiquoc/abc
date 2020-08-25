@@ -1054,7 +1054,8 @@ extern ABC_DLL int *              Abc_NtkVerifySimulatePattern( Abc_Ntk_t * pNtk
 extern ABC_DLL int                Abc_NtkIsTrueCex( Abc_Ntk_t * pNtk, Abc_Cex_t * pCex );
 extern ABC_DLL int                Abc_NtkIsValidCex( Abc_Ntk_t * pNtk, Abc_Cex_t * pCex );
 
-
+/*=== abcXsim.c ==========================================================*/
+extern int * Abc_NtkSimulateSeq(Abc_Ntk_t * pNtk, int nFrames, int nOutputs, int seed );
 
 ABC_NAMESPACE_HEADER_END
 
