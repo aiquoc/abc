@@ -1427,27 +1427,6 @@ static inline int Abc_NtkFinCompareSimTwo( Abc_Ntk_t * pNtk,  Vec_Int_t * vCos, 
 	
 	return 1;
 }
-/*static inline int Abc_NtkFinCompareSimTwoSeq( Abc_Ntk_t ** pNtkFaults,int nFaultNum,  int iFin0, int iFin )
-{
-	int  equal = 1;
-	int *out0;
-	int *out1;
-	//int *classes; 
-	int nOnputs = Abc_NtkPoNum(pNtkFaults[0]);
-	
-	out0 = Abc_NtkSimulateSeq(pNtkFaults[iFin0 -1]);
-
-	out1 = Abc_NtkSimulateSeq(pNtkFaults[iFin -1]);
-	for (int i = 0; i < nOnputs * 50 ; i++)
-	{
-		if (out1[i] != out0[i])
-			equal = 0;
-	}
-	free(out0);
-	free(out1);
-	
-	return equal;
-}*/
 
 
 Gia_Man_t * Abc_NtkFinMiterToGia( Abc_Ntk_t * pNtk, Vec_Int_t * vTypes, Vec_Int_t * vCos, Vec_Int_t * vCis, Vec_Int_t * vNodes, 
@@ -1469,28 +1448,16 @@ Gia_Man_t * Abc_NtkFinMiterToGia( Abc_Ntk_t * pNtk, Vec_Int_t * vTypes, Vec_Int_
     // create inputs
     Abc_NtkForEachObjVec( vCis, pNtk, pObj, i )
     {
-		//Vec_IntPrint(vCis);
 		iLit = Gia_ManAppendCi(pNew);
-		//printf("objec ID %d  iLit %d   \n",Abc_ObjId(pObj) , iLit);
         for ( n = 0; n < 2; n++ )
         {
-			//Vec_IntPrint(vLits);
-			if ( iObjs[n] != (int)Abc_ObjId(pObj) ){
-                Vec_IntWriteEntry( vLits, Abc_Var2Lit(Abc_ObjId(pObj), n), iLit );
-				
-				//printf("Check print Abc_Var2Lit(Abc_ObjId(pObj), n) = %d  , n = %d  iLit = %d, iObjs[n]  = %d \n ",Abc_Var2Lit(Abc_ObjId(pObj), n), n, iLit, iObjs[n]  );
-				//Vec_IntPrint(vLits);
-			}
-            else if ( Types[n] != ABC_FIN_NEG ){
+			if ( iObjs[n] != (int)Abc_ObjId(pObj) )
+                Vec_IntWriteEntry( vLits, Abc_Var2Lit(Abc_ObjId(pObj), n), iLit );	
+            else if ( Types[n] != ABC_FIN_NEG )
                 Vec_IntWriteEntry( vLits, Abc_Var2Lit(Abc_ObjId(pObj), n), Abc_NtkFinSimOneLit(pNew, pObj, Types[n], vLits, n, vTemp) );
 				
-				//printf("objec ID %d   FindSim %d   \n",Abc_ObjId(pObj) ,  Abc_NtkFinSimOneLit(pNew, pObj, Types[n], vLits, n, vTemp));
-				//Vec_IntPrint(vLits);
-			}
-			else{ // if ( iObjs[n] == (int)Abc_ObjId(pObj) && Types[n] == ABC_FIN_NEG )
+			else // if ( iObjs[n] == (int)Abc_ObjId(pObj) && Types[n] == ABC_FIN_NEG )
                 Vec_IntWriteEntry( vLits, Abc_Var2Lit(Abc_ObjId(pObj), n), Abc_LitNot(iLit) );
-				
-			}
 		}
     }
 	
@@ -1501,11 +1468,9 @@ Gia_Man_t * Abc_NtkFinMiterToGia( Abc_Ntk_t * pNtk, Vec_Int_t * vTypes, Vec_Int_
 		Type = Abc_NtkIsMappedLogic(pNtk) ? Mio_GateReadCell((Mio_Gate_t *)pObj->pData) : Vec_IntEntry(vTypes, Abc_ObjId(pObj));
         for ( n = 0; n < 2; n++ )
         {
-            if ( iObjs[n] != (int)Abc_ObjId(pObj) ){
+            if ( iObjs[n] != (int)Abc_ObjId(pObj) )
                 Vec_IntWriteEntry( vLits, Abc_Var2Lit(Abc_ObjId(pObj), n), Abc_NtkFinSimOneLit(pNew, pObj, Type, vLits, n, vTemp) );
-				//printf("objec ID %d   FindSim %d   \n",Abc_ObjId(pObj) ,  Abc_NtkFinSimOneLit(pNew, pObj, Type, vLits, n, vTemp));
-				//Vec_IntPrint(vLits);
-			}
+				
             else if ( Types[n] != ABC_FIN_NEG )
                 Vec_IntWriteEntry( vLits, Abc_Var2Lit(Abc_ObjId(pObj), n), Abc_NtkFinSimOneLit(pNew, pObj, Types[n], vLits, n, vTemp) );
             else // if ( iObjs[n] == (int)Abc_ObjId(pObj) && Types[n] == ABC_FIN_NEG )
@@ -1962,44 +1927,38 @@ int Abc_NtkFinCountPairs( Vec_Wec_t * vClasses )
 
 
 
-Vec_Wec_t * Abc_NtkSimulateValue(Abc_Ntk_t **fcircNtk, int nFaultNum, int nFrames, int* M, int seed, Vec_Int_t * vGroupRow, int grp_len)
+Vec_Wec_t * Abc_NtkSimulateValue(Abc_Ntk_t **fcircNtk, int nFaultNum, int nFrames,  int seed, Vec_Int_t * vGroupRow, int sizeclass)
 {
 	//to generata 
 	int j, i, outputs;
-	int * out;
+	Vec_Int_t * vOut;
 	Vec_Wec_t * wSimOut;
-	int ind = 0;
-	//printf("gen_matrix grp_len = %d \n\n", grp_len);
 	outputs = Abc_NtkPoNum(*fcircNtk);
-	// M is number of simulation result of one circuit output over nFrames
-	*M = outputs*nFrames;
 	// final_matrix contains simulation of all fault circuits
 	wSimOut = Vec_WecAlloc(outputs * nFrames * nFaultNum);
 	
-	for (j = 0; j < grp_len; j++)
+	for (j = 0; j < sizeclass; j++)
 	{
-		//printf("%d \t", group[j]);
 		// do simulation for circuit over nFrames. Result is list of outputs
-		out = Abc_NtkSimulateSeq(fcircNtk[Vec_IntEntry(vGroupRow,j)], nFrames, outputs, seed);
+		vOut = Abc_NtkSimulateSeq(fcircNtk[Vec_IntEntry(vGroupRow,j)], nFrames, outputs, seed);
 		Vec_Int_t * vSimulation;
 		vSimulation = Vec_WecPushLevel(wSimOut);
 		for (i = 0; i < outputs*nFrames; i++)
 		{
 			// Copy simulation result to final_matrix
-			Vec_IntPush(vSimulation, out[i]);
-			//printf("out[%d] %d \n",i, out[i]);
-			ind++;
+			Vec_IntPush(vSimulation, Vec_IntEntry(vOut,i));
 			
 		}
-		free(out);
+	//	Vec_IntPrint(vSimulation);
+		Vec_IntFree(vOut);
 	}
 	//printf("\n");
 	return wSimOut;
 }
 
-int Abc_NtkPregroupIteration(Abc_Ntk_t **fcircNtk, int fl_num, int nFrames, Vec_Wec_t * wGroups,  int row,  int seed)
+int Abc_NtkPregroupIteration(Abc_Ntk_t **fcircNtk, int nFaultNum, int nFrames, Vec_Wec_t * wGroups,  int row,  int seed)
 {
-	int i, j, m;
+	int i, j;
 
 	Vec_Wec_t * wSimulation;
 
@@ -2007,31 +1966,27 @@ int Abc_NtkPregroupIteration(Abc_Ntk_t **fcircNtk, int fl_num, int nFrames, Vec_
 
 	int rows = Vec_WecSize(wGroups);
 	Vec_Int_t * vClasses = Vec_WecEntry(wGroups, row);
-	int grp_len = Vec_IntSize(vClasses);
-	//printf("rows = %d grp_len =%d \n", rows, grp_len);
-	
-	//static int c_cnt = 0;
-	//printf("Call: %d\n",c_cnt); c_cnt++;
-	
-	//Create wSimulation is vector(size grp_len) of vector int(size m)
-	wSimulation = Abc_NtkSimulateValue(fcircNtk, fl_num, nFrames, &m, seed, vClasses, grp_len);
+
+	wSimulation = Abc_NtkSimulateValue(fcircNtk, nFaultNum, nFrames,  seed, vClasses, Vec_IntSize(vClasses));
 	//Vec_WecPrint(wSimulation,0);
 	
-	Vec_Int_t * vRow = Vec_IntAllocArrayCopy(vClasses->pArray, Vec_WecEntry(wGroups, row)->nSize);// fault id is not arrange
-	
+	//Vec_Int_t * vRow = Vec_IntAllocArrayCopy(vClasses->pArray, Vec_WecEntry(wGroups, row)->nSize);// fault id is not arrange
+	Vec_Int_t * vRow = Vec_IntDup(vClasses);
 	Vec_IntShrink(vClasses, 1);
 	
+
 	//vMap is a map, that map from fault id to index of circuit in vClasses
-	Vec_Int_t * vMap = Vec_IntAlloc(fl_num);
+	Vec_Int_t * vMap = Vec_IntAlloc(nFaultNum);
 	int Entry;
 	Vec_IntForEachEntry(vRow, Entry, i)
 		Vec_IntSetEntry(vMap, Entry, i);
-		
+	
+	
 	
 	for (i = 1; i < Vec_IntSize(vRow); i++){
 		int find = 0;
-		if (1 == Vec_IntEqual(Vec_WecEntry(wSimulation, i), Vec_WecEntry(wSimulation, 0))){
-			Vec_WecPush(wGroups, row, Vec_IntEntry(vRow, i));		
+		if (Vec_IntEqual(Vec_WecEntry(wSimulation, i), Vec_WecEntry(wSimulation, 0))){
+			Vec_IntPush(vClasses, Vec_IntEntry(vRow, i));		
 			find = 1;
 		}
 		else{
@@ -2039,14 +1994,14 @@ int Abc_NtkPregroupIteration(Abc_Ntk_t **fcircNtk, int fl_num, int nFrames, Vec_
 			Vec_WecForEachLevelStart(wGroups, vClass, j, rows){
 				int nInd0 = Vec_IntEntry(vClass,0);
 				
-				if (1 == Vec_IntEqual(Vec_WecEntry(wSimulation, i), Vec_WecEntry(wSimulation, Vec_IntEntry(vMap, nInd0)))) {
+				if (Vec_IntEqual(Vec_WecEntry(wSimulation, i), Vec_WecEntry(wSimulation, Vec_IntEntry(vMap, nInd0)))) {
 					Vec_IntPush(vClass, Vec_IntEntry(vRow, i));
 				find = 1;
 				break;
 				}
 			}
 		}
-		if (1 != find)
+		if (find == 0)
 		{
 		
 			Vec_Int_t * vClassNew = Vec_WecPushLevel(wGroups);
@@ -2072,6 +2027,7 @@ void Abc_Ntk_GroupIndex(Vec_Wec_t * wGroups, Vec_Int_t* vPregroup_faults)
 
 	int i,j, Entry;
 	Vec_Int_t * vClass;
+	//Vec_WecPrint(wGroups,0);
 	Vec_WecForEachLevel( wGroups, vClass, i ){
 		int index = Vec_IntEntry(vClass,0);
 		if(Vec_IntSize(vClass) == 1)
@@ -2079,6 +2035,7 @@ void Abc_Ntk_GroupIndex(Vec_Wec_t * wGroups, Vec_Int_t* vPregroup_faults)
 		Vec_IntForEachEntry(vClass, Entry, j)
 			Vec_IntSetEntry(vPregroup_faults, Entry, index);
 	}
+	//Vec_IntPrint(vPregroup_faults);
 		
 	
 }
@@ -2158,9 +2115,8 @@ Vec_Int_t * Abc_NtlFaultPregroup(Abc_Ntk_t **fcircNtk, int nFaultNum){
 			// Do pregroup_iteration for row j, with new seed number ((i + 1)*(j + 1) + 10))
 			// If no new group had been found for row j, 
 			// then increase number of processed vIteration.
-			// Else, reset to_process counter
+			// Else, reset counter
 			if (Abc_NtkPregroupIteration(fcircNtk, nFaultNum, nFrames, wGroups,  j,  (i + 1)*(j + 1) + 10)){
-				//Vec_IntEntry(vIteration, j) + 1;
 				Vec_IntSetEntry(vIteration, j, Vec_IntEntry(vIteration, j) + 1);
 			}
 			else 
@@ -2184,7 +2140,7 @@ Vec_Int_t * Abc_NtlFaultPregroup(Abc_Ntk_t **fcircNtk, int nFaultNum){
 	}
 
 	Abc_Ntk_GroupIndex( wGroups, vPregroup_faults );
-	
+	//Vec_WecPrint(wGroups,0);
 	Vec_IntFree(vFaultsID);
 	Vec_WecFree(wGroups);
 	return vPregroup_faults;
@@ -2499,8 +2455,8 @@ void Abc_NtkDetectClassesTest1(  char * pFileNames[2], int fSeq, int fVerbose, i
 	
 	Abc_Ntk_t ** pNtkFaults = NULL;
 	struct Abc_Ntk_FaultDescr *fault = NULL;
-	struct Abc_NtkCircuit * circ = NULL;
-	struct Abc_NtkCircuit **fcirc = NULL;
+	struct Abc_NtkCircuit * pNtkcirc = NULL;
+	struct Abc_NtkCircuit ** pNtkfcirc = NULL;
 	int maxNode;
 	int nFaultNum = 0;
 	int i;
@@ -2512,16 +2468,16 @@ void Abc_NtkDetectClassesTest1(  char * pFileNames[2], int fSeq, int fVerbose, i
 	if ( fSeq )
 	{
 		Abc_NtkReadFaultInf(pFileNames[1], &fault, &nFaultNum);
-		circ = Abc_NtkReadInitialCircuit(pFileNames[0]);
+		pNtkcirc = Abc_NtkReadInitialCircuit(pFileNames[0]);
 		maxNode = Abc_NtkObjNumMax(pNtk);
 		pNtkF = (Abc_Ntk_t**) malloc(nFaultNum * sizeof(Abc_Ntk_t *));
-		fcirc = calloc(nFaultNum, sizeof(struct Abc_NtkCircuit *));
+		pNtkfcirc = calloc(nFaultNum, sizeof(struct Abc_NtkCircuit *));
 		for (i = 0; i < nFaultNum; i++) {
-			fcirc[i] = Abc_NtkInjectFault(circ, fault[i], maxNode+1);
+			pNtkfcirc[i] = Abc_NtkInjectFault(pNtkcirc, fault[i], maxNode+1);
 			pNtkF[i] = Abc_NtkInjectFlt(pNtk, fault[i], maxNode+1);
 		}
 			
-		pNtkFaults = Abc_NtkGenerateAllCircuitsArray(fcirc, nFaultNum);
+		pNtkFaults = Abc_NtkGenerateAllCircuitsArray(pNtkfcirc, nFaultNum);
 		vClassesSeq = Abc_NtkDetectFinClassesSeq(pNtkFaults, nFaultNum);
 
 	}
@@ -2539,14 +2495,14 @@ void Abc_NtkDetectClassesTest1(  char * pFileNames[2], int fSeq, int fVerbose, i
 
 	if (fSeq)
 	{
-	Abc_NtkFreeCircuit(circ);
+	Abc_NtkFreeCircuit(pNtkcirc);
 	for (i = 0; i < nFaultNum; i++) {
-		Abc_NtkFreeCircuit(fcirc[i]);
+		Abc_NtkFreeCircuit(pNtkfcirc[i]);
 		Abc_NtkDelete(pNtkF[i]);
 	}
 
 	
-	free(fcirc);
+	free(pNtkfcirc);
 	free(fault);
 	Abc_NtkFreeCircuits(pNtkFaults, nFaultNum);
 	}

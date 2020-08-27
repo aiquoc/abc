@@ -227,7 +227,7 @@ void Abc_NtkCycleInitState( Abc_Ntk_t * pNtk, int nFrames, int fUseXval, int fVe
 //    printf( "\n" );
 }
 
-int * Abc_NtkSimulateSeq(Abc_Ntk_t * pNtk, int nFrames, int nOutputs, int seed )
+Vec_Int_t * Abc_NtkSimulateSeq(Abc_Ntk_t * pNtk, int nFrames, int nOutputs, int seed )
 {
 	nOutputs = Abc_NtkPoNum(pNtk);
 	
@@ -284,10 +284,10 @@ int * Abc_NtkSimulateSeq(Abc_Ntk_t * pNtk, int nFrames, int nOutputs, int seed )
 		Abc_NtkForEachLatch(pNtk, pObj, i)
 			Abc_ObjSetXsim(Abc_ObjFanout0(pObj), Abc_ObjGetXsim(Abc_ObjFanin0(pObj)));
 		
-
-		
 	}
-	return out;
+	Vec_Int_t * vOut;	
+	vOut = Vec_IntAllocArrayCopy(out, nFrames * nOutputs);
+	return vOut;
 }
 
 ///////////////////////////////////////////////////////////////////////
