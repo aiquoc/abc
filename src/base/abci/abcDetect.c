@@ -1943,14 +1943,10 @@ Vec_Wec_t * Abc_NtkSimulateValue(Abc_Ntk_t **fcircNtk, int nFaultNum, int nFrame
 		vOut = Abc_NtkSimulateSeq(fcircNtk[Vec_IntEntry(vGroupRow,j)], nFrames, outputs, seed);
 		Vec_Int_t * vSimulation;
 		vSimulation = Vec_WecPushLevel(wSimOut);
-		for (i = 0; i < outputs*nFrames; i++)
-		{
-			// Copy simulation result to final_matrix
-			Vec_IntPush(vSimulation, Vec_IntEntry(vOut,i));
-			
-		}
-	//	Vec_IntPrint(vSimulation);
-		Vec_IntFree(vOut);
+		vSimulation->nCap = vOut->nCap;
+		vSimulation->nSize = vOut->nSize;
+		vSimulation->pArray = vOut->pArray;
+		//	Vec_IntPrint(vSimulation);
 	}
 	//printf("\n");
 	return wSimOut;
@@ -2049,7 +2045,7 @@ Vec_Int_t * Abc_NtlFaultPregroup(Abc_Ntk_t **fcircNtk, int nFaultNum){
 	int min_el = 5;
 	int max_el = 20;
 	int threshold = 3;
-	int nFrames = 50;
+	int nFrames = 100;
 	
 	// initialization
 	

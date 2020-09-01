@@ -230,8 +230,7 @@ void Abc_NtkCycleInitState( Abc_Ntk_t * pNtk, int nFrames, int fUseXval, int fVe
 Vec_Int_t * Abc_NtkSimulateSeq(Abc_Ntk_t * pNtk, int nFrames, int nOutputs, int seed )
 {
 	nOutputs = Abc_NtkPoNum(pNtk);
-	
-	int *out = (int*) malloc(nFrames * nOutputs * sizeof(int));
+	Vec_Int_t * vOut = Vec_IntStart(nFrames * nOutputs);
 	Abc_Obj_t * pObj;
 	int i, f;
 	if ( !Abc_NtkIsStrash(pNtk) )
@@ -278,15 +277,14 @@ Vec_Int_t * Abc_NtkSimulateSeq(Abc_Ntk_t * pNtk, int nFrames, int nOutputs, int 
         fprintf( stdout, "\n" );*/
 		
 		Abc_NtkForEachPo(pNtk, pObj, i)
-			out[f*nOutputs + i] = Abc_ObjGetXsim(pObj) - 1;
+			Vec_IntWriteEntry(vOut, f*nOutputs + i, Abc_ObjGetXsim(pObj) - 1);
 			
 		// transfer the latch values
 		Abc_NtkForEachLatch(pNtk, pObj, i)
 			Abc_ObjSetXsim(Abc_ObjFanout0(pObj), Abc_ObjGetXsim(Abc_ObjFanin0(pObj)));
 		
 	}
-	Vec_Int_t * vOut;	
-	vOut = Vec_IntAllocArrayCopy(out, nFrames * nOutputs);
+	
 	return vOut;
 }
 
