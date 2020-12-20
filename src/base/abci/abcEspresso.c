@@ -175,8 +175,10 @@ char * Abc_SopFromEspresso( Extra_MmFlex_t * pMan, pset_family Cover )
 
     nVars  = Cover->sf_size/2;
     nCubes = Cover->count;
-
-    pSop = Abc_SopStart( pMan, nCubes, nVars );
+    if ((nVars == 0) && (nCubes == 0))
+    	pSop = Abc_SopCreateConst0(pMan);
+    else
+    	pSop = Abc_SopStart( pMan, nCubes, nVars );
 
     // go through the cubes
     i = 0;
