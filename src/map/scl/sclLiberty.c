@@ -1396,7 +1396,7 @@ Vec_Ptr_t * Scl_LibertyReadTemplates( Scl_Tree_t * p )
             else if ( !Scl_LibertyCompare(p, pItem->Key, "variable_2") )
                 assert(pVar2 == NULL), pVar2 = Abc_UtilStrsav( Scl_LibertyReadString(p, pItem->Head) );
         }
-        if ( pVar1 == NULL || pVar2 == NULL )
+        if ( pVar1 == NULL && pVar2 == NULL )
         {
             ABC_FREE( pVar1 );  
             ABC_FREE( pVar2 );
@@ -1404,21 +1404,38 @@ Vec_Ptr_t * Scl_LibertyReadTemplates( Scl_Tree_t * p )
             Vec_FltFreeP( &vIndex2 );
             continue;
         }
-        assert( pVar1 != NULL && pVar2 != NULL );
-        fFlag0 = (!strcmp(pVar1, "input_net_transition") && !strcmp(pVar2, "total_output_net_capacitance"));
-        fFlag1 = (!strcmp(pVar2, "input_net_transition") && !strcmp(pVar1, "total_output_net_capacitance"));
-        ABC_FREE( pVar1 );  
-        ABC_FREE( pVar2 );
-        if ( !fFlag0 && !fFlag1 )
-        {
-            Vec_FltFreeP( &vIndex1 );
+		if ( pVar1 != NULL && pVar2 == NULL )
+        {  
+            ABC_FREE( pVar2 );
             Vec_FltFreeP( &vIndex2 );
-            continue;
-        }
-        Vec_PtrPush( vRes, Abc_UtilStrsav( Scl_LibertyReadString(p, pTempl->Head) ) );
-        Vec_PtrPush( vRes, fFlag0 ? NULL : (void *)(ABC_PTRINT_T)1 );
-        Vec_PtrPush( vRes, fFlag0 ? vIndex1 : vIndex2 );
-        Vec_PtrPush( vRes, fFlag0 ? vIndex2 : vIndex1 );
+            fFlag0 = (!strcmp(pVar1, "total_output_net_capacitance"));
+			ABC_FREE( pVar1 ); 
+			if (!fFlag0) {
+				Vec_FltFreeP( &vIndex1 );
+				continue;
+			}
+			Vec_PtrPush( vRes, Abc_UtilStrsav( Scl_LibertyReadString(p, pTempl->Head) ) );
+			Vec_PtrPush( vRes, fFlag0 ? NULL : (void *)(ABC_PTRINT_T)1 );
+			Vec_PtrPush( vRes, fFlag0 ? Vec_FltStart(1) : vIndex1 );
+			Vec_PtrPush( vRes, fFlag0 ? vIndex1 : Vec_FltStart(1) );
+			
+        } else {
+			assert( pVar1 != NULL && pVar2 != NULL );
+			fFlag0 = (!strcmp(pVar1, "input_net_transition") && !strcmp(pVar2, "total_output_net_capacitance"));
+			fFlag1 = (!strcmp(pVar2, "input_net_transition") && !strcmp(pVar1, "total_output_net_capacitance"));
+			ABC_FREE( pVar1 );  
+			ABC_FREE( pVar2 );
+			if ( !fFlag0 && !fFlag1 )
+			{
+				Vec_FltFreeP( &vIndex1 );
+				Vec_FltFreeP( &vIndex2 );
+				continue;
+			}
+			Vec_PtrPush( vRes, Abc_UtilStrsav( Scl_LibertyReadString(p, pTempl->Head) ) );
+			Vec_PtrPush( vRes, fFlag0 ? NULL : (void *)(ABC_PTRINT_T)1 );
+			Vec_PtrPush( vRes, fFlag0 ? vIndex1 : vIndex2 );
+			Vec_PtrPush( vRes, fFlag0 ? vIndex2 : vIndex1 );
+		}
     }
     if ( Vec_PtrSize(vRes) == 0 )
         Abc_Print( 0, "Templates are not defined.\n" );
