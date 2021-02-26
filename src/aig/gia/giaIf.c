@@ -756,6 +756,43 @@ int Gia_ManChoiceLevel( Gia_Man_t * p )
 } 
 
 
+/**Function*************************************************************
+
+  Synopsis    [Checks integrity of choice nodes.]
+
+  Description []
+               
+  SideEffects []
+
+  SeeAlso     []
+
+***********************************************************************/
+void If_ManCheckChoices_rec( If_Man_t * pIfMan, If_Obj_t * pIfObj )
+{
+    if ( !pIfObj || pIfObj->Type != IF_AND || pIfObj->fDriver )
+        return;
+    pIfObj->fDriver = 1;
+    If_ManCheckChoices_rec( pIfMan, If_ObjFanin0(pIfObj) );
+    If_ManCheckChoices_rec( pIfMan, If_ObjFanin1(pIfObj) );
+    If_ManCheckChoices_rec( pIfMan, pIfObj->pEquiv );
+}
+void If_ManCheckChoices( If_Man_t * pIfMan )
+{
+    If_Obj_t * pIfObj;
+    int i, fFound = 0;
+    If_ManForEachObj( pIfMan, pIfObj, i )
+        pIfObj->fDriver = 0;
+    If_ManForEachCo( pIfMan, pIfObj, i )
+        If_ManCheckChoices_rec( pIfMan, If_ObjFanin0(pIfObj) );
+    If_ManForEachNode( pIfMan, pIfObj, i )
+        if ( !pIfObj->fDriver )
+            printf( "Object %d is dangling.\n", i ), fFound = 1;
+    if ( !fFound )
+        printf( "There are no dangling objects.\n" );
+    If_ManForEachObj( pIfMan, pIfObj, i )
+        pIfObj->fDriver = 0;
+}
+
 
 /**Function*************************************************************
 
@@ -824,6 +861,7 @@ If_Man_t * Gia_ManToIf( Gia_Man_t * p, If_Par_t * pPars )
     }
     if ( Gia_ManHasChoices(p) )
         Gia_ManCleanMark0( p );
+    //If_ManCheckChoices( pIfMan );
     return pIfMan;
 }
 
@@ -1987,6 +2025,7 @@ Gia_Man_t * Gia_ManFromIfLogic( If_Man_t * pIfMan )
         pFile = fopen( Buffer, "wb" );
         if ( pFile == NULL )
         {
+            Vec_StrFree( vConfigsStr );
             printf( "Cannot open file \"%s\".\n", Buffer );
             return pNew;
         }
@@ -2357,6 +2396,7 @@ Gia_Man_t * Gia_ManPerformMappingInt( Gia_Man_t * p, If_Par_t * pPars )
     // transfer name
     assert( pNew->pName == NULL );
     pNew->pName = Abc_UtilStrsav( p->pName );
+    ABC_FREE( pNew->pSpec );
     pNew->pSpec = Abc_UtilStrsav( p->pSpec );
     Gia_ManSetRegNum( pNew, Gia_ManRegNum(p) );
     // print delay trace
