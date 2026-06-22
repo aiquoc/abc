@@ -41,6 +41,7 @@
 #include "misc/vec/vecHash.h"
 #include "misc/vec/vecWec.h"
 #include "map/if/acd/ac_wrapper.h"
+#include "map/if/ifNewBox.h"
 
 ABC_NAMESPACE_HEADER_START
 

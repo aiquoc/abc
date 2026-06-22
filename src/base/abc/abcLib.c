@@ -147,7 +147,10 @@ Abc_Des_t * Abc_DesDup( Abc_Des_t * p )
     Vec_PtrForEachEntry( Abc_Ntk_t *, p->vModules, pTemp, i )
         Abc_NtkForEachBox( pTemp, pObj, k )
             if ( Abc_ObjIsWhitebox(pObj) || Abc_ObjIsBlackbox(pObj) )
-                pObj->pCopy->pData = Abc_ObjModel(pObj)->pCopy;
+	    {
+		Abc_Ntk_t * pModel = (Abc_Ntk_t *)Abc_ObjData(pObj);
+                pObj->pCopy->pData = pModel ? pModel->pCopy : NULL;
+	    }
     return pNew;
 }
 
