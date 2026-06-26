@@ -4506,6 +4506,14 @@ SOURCE=.\src\map\if\ifLibBox.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\src\map\if\ifNewBox.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\src\map\if\ifNewBox.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\src\map\if\ifLibLut.c
 # End Source File
 # Begin Source File
